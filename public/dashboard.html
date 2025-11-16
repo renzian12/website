@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Webhook Dashboard - Reotnik MGUI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #161616;
+    }
+    .press-effect:active {
+      transform: scale(0.96);
+      transition: transform 0.1s ease-in-out;
+    }
+    .fade-in {
+      animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen text-white bg-[#161616]">
+  <!-- Header -->
+  <nav class="flex justify-between items-center px-5 md:px-20 py-5 bg-[#202020]">
+    <div class="flex items-center space-x-3">
+      <img src="https://cdn.discordapp.com/avatars/1128544110266044496/ce3ac9a9fc2bff789824fb3de7ccea97.webp?size=80" alt="Logo" class="w-7 h-7 rounded">
+      <span class="text-xl font-semibold">Reotnik MGUI</span>
+    </div>
+    <button id="logoutBtn" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-semibold transition">
+      Logout
+    </button>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-6">
+    <div class="max-w-4xl mx-auto">
+      <div class="bg-[#202020] p-8 rounded-2xl shadow-lg">
+        <h2 class="text-3xl font-bold mb-2">Webhook Configuration</h2>
+        <p class="text-gray-400 mb-6">Manage your Discord webhook URLs for purchase and visit notifications</p>
+
+        <!-- Success Message -->
+        <div id="successMessage" class="hidden mb-6 p-4 bg-green-600/20 border border-green-600 rounded-xl text-green-400 fade-in">
+          ✓ Webhooks updated successfully!
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="hidden mb-6 p-4 bg-red-600/20 border border-red-600 rounded-xl text-red-400 fade-in">
+          ✗ <span id="errorText">Failed to update webhooks</span>
+        </div>
+
+        <form id="webhookForm" class="space-y-6">
+          <!-- Purchase Webhook -->
+          <div>
+            <label for="purchaseWebhook" class="block text-sm font-medium mb-2 flex items-center gap-2">
+              <span class="text-xl">🎉</span> Purchase Webhook URL
+            </label>
+            <input 
+              type="url" 
+              id="purchaseWebhook" 
+              name="purchaseWebhook" 
+              placeholder="https://discord.com/api/webhooks/..."
+              required
+              class="w-full px-4 py-3 bg-[#161616] rounded-xl border border-[#333] focus:outline-none focus:border-orange-500 transition" />
+            <p class="text-xs text-gray-500 mt-1">Notifications for developer product and gamepass purchases</p>
+          </div>
+
+          <!-- Visit Webhook -->
+          <div>
+            <label for="visitWebhook" class="block text-sm font-medium mb-2 flex items-center gap-2">
+              <span class="text-xl">👋</span> Visit Webhook URL
+            </label>
+            <input 
+              type="url" 
+              id="visitWebhook" 
+              name="visitWebhook" 
+              placeholder="https://discord.com/api/webhooks/..."
+              required
+              class="w-full px-4 py-3 bg-[#161616] rounded-xl border border-[#333] focus:outline-none focus:border-orange-500 transition" />
+            <p class="text-xs text-gray-500 mt-1">Notifications when players join your game</p>
+          </div>
+
+          <!-- Secondary Purchase Webhook -->
+          <div>
+            <label for="secondaryWebhook" class="block text-sm font-medium mb-2 flex items-center gap-2">
+              <span class="text-xl">📢</span> Secondary Purchase Webhook (Optional)
+            </label>
+            <input 
+              type="url" 
+              id="secondaryWebhook" 
+              name="secondaryWebhook" 
+              placeholder="https://discord.com/api/webhooks/..."
+              class="w-full px-4 py-3 bg-[#161616] rounded-xl border border-[#333] focus:outline-none focus:border-orange-500 transition" />
+            <p class="text-xs text-gray-500 mt-1">Additional webhook for purchase notifications (currently hardcoded)</p>
+          </div>
+
+          <!-- API Endpoint Info -->
+          <div class="bg-[#161616] p-4 rounded-xl border border-[#333]">
+            <h3 class="font-semibold mb-2 flex items-center gap-2">
+              <span class="text-xl">🔗</span> API Endpoint
+            </h3>
+            <code class="text-sm text-orange-400 break-all">
+              https://your-domain.com/api/webhooks
+            </code>
+            <p class="text-xs text-gray-500 mt-2">Use this endpoint in your Roblox script to fetch webhook URLs</p>
+          </div>
+
+          <!-- Save Button -->
+          <button 
+            type="submit"
+            class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-xl transition duration-200 press-effect flex items-center justify-center gap-2">
+            <span>💾</span> Save Webhook Configuration
+          </button>
+        </form>
+
+        <!-- Current Configuration Display -->
+        <div class="mt-8 p-6 bg-[#161616] rounded-xl border border-[#333]">
+          <h3 class="font-semibold mb-4 flex items-center gap-2">
+            <span class="text-xl">📋</span> Current Configuration
+          </h3>
+          <div class="space-y-3 text-sm">
+            <div>
+              <span class="text-gray-400">Purchase:</span>
+              <p id="currentPurchase" class="text-orange-400 break-all mt-1">Not configured</p>
+            </div>
+            <div>
+              <span class="text-gray-400">Visit:</span>
+              <p id="currentVisit" class="text-orange-400 break-all mt-1">Not configured</p>
+            </div>
+            <div>
+              <span class="text-gray-400">Secondary:</span>
+              <p id="currentSecondary" class="text-orange-400 break-all mt-1">Not configured</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Integration Guide -->
+        <div class="mt-8 p-6 bg-blue-600/10 border border-blue-600/30 rounded-xl">
+          <h3 class="font-semibold mb-3 flex items-center gap-2 text-blue-400">
+            <span class="text-xl">📖</span> Integration Guide
+          </h3>
+          <ol class="text-sm space-y-2 text-gray-300">
+            <li>1. Configure your webhook URLs above and save</li>
+            <li>2. Update your Roblox script to fetch webhooks from the API endpoint</li>
+            <li>3. Replace hardcoded webhook URLs with API calls</li>
+            <li>4. Test the integration to ensure notifications work</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-[#202020] text-center text-sm py-4 text-gray-300">
+    &copy; 2025 Reotnik MGUI. All rights reserved.
+  </footer>
+
+  <script>
+    const API_BASE_URL = 'http://localhost:3000/api';
+
+    // Check authentication on page load
+    async function checkAuth() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/status`, {
+          credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (!data.authenticated) {
+          window.location.href = 'login.html';
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err);
+        window.location.href = 'login.html';
+      }
+    }
+
+    // Load existing configuration from API
+    async function loadWebhooks() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/webhooks`, {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to load webhooks');
+        }
+        
+        const config = await response.json();
+        document.getElementById('purchaseWebhook').value = config.purchase || '';
+        document.getElementById('visitWebhook').value = config.visit || '';
+        document.getElementById('secondaryWebhook').value = config.secondary || '';
+        updateCurrentDisplay(config);
+      } catch (err) {
+        console.error('Failed to load webhooks:', err);
+        showMessage('error', 'Failed to load webhook configuration');
+      }
+    }
+
+    // Update current configuration display
+    function updateCurrentDisplay(config) {
+      document.getElementById('currentPurchase').textContent = config.purchase || 'Not configured';
+      document.getElementById('currentVisit').textContent = config.visit || 'Not configured';
+      document.getElementById('currentSecondary').textContent = config.secondary || 'Not configured';
+    }
+
+    // Show message
+    function showMessage(type, text = '') {
+      const successMsg = document.getElementById('successMessage');
+      const errorMsg = document.getElementById('errorMessage');
+      
+      successMsg.classList.add('hidden');
+      errorMsg.classList.add('hidden');
+      
+      if (type === 'success') {
+        successMsg.classList.remove('hidden');
+        setTimeout(() => successMsg.classList.add('hidden'), 5000);
+      } else {
+        if (text) document.getElementById('errorText').textContent = text;
+        errorMsg.classList.remove('hidden');
+        setTimeout(() => errorMsg.classList.add('hidden'), 5000);
+      }
+    }
+
+    // Handle form submission
+    document.getElementById('webhookForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const config = {
+        purchase: document.getElementById('purchaseWebhook').value.trim(),
+        visit: document.getElementById('visitWebhook').value.trim(),
+        secondary: document.getElementById('secondaryWebhook').value.trim()
+      };
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/webhooks`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(config)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to save webhooks');
+        }
+
+        updateCurrentDisplay(config);
+        showMessage('success');
+      } catch (err) {
+        console.error('Failed to save webhooks:', err);
+        showMessage('error', err.message);
+      }
+    });
+
+    // Logout handler
+    document.getElementById('logoutBtn').addEventListener('click', async function() {
+      if (confirm('Are you sure you want to logout?')) {
+        try {
+          await fetch(`${API_BASE_URL}/auth/logout`, {
+            method: 'POST',
+            credentials: 'include'
+          });
+          window.location.href = 'login.html';
+        } catch (err) {
+          console.error('Logout failed:', err);
+        }
+      }
+    });
+
+    // Initialize on page load
+    checkAuth();
+    loadWebhooks();
+  </script>
+</body>
+</html>
